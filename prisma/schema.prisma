@@ -1,13 +1,74 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum NotificationType {
+  transactional
+  marketing
+}
+
+enum Channel {
+  email
+  sms
+  messenger
+  push
+}
+
+enum Region {
+  EU
+  US
+  GE
+  GLOBAL
+}
+
+model DefaultPreference {
+  id               String           @id @default(uuid())
+  notificationType NotificationType
+  channel          Channel
+  enabled          Boolean
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@unique([notificationType, channel])
+}
+
+model UserPreference {
+  id               String           @id @default(uuid())
+  userId           String
+  notificationType NotificationType
+  channel          Channel
+  enabled          Boolean
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@unique([userId, notificationType, channel])
+}
+
+model UserQuietHours {
+  userId         String   @id
+  enabled        Boolean  @default(false)
+  startTimeLocal String
+  endTimeLocal   String
+  timezone       String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model GlobalPolicy {
+  id               String           @id @default(uuid())
+  notificationType NotificationType
+  channel          Channel
+  region           Region
+  enabled          Boolean          @default(true)
+  reason           String           @default("blocked_by_global_policy")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([notificationType, channel, region])
 }

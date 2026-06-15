@@ -6,19 +6,20 @@ import {
   timezoneSchema,
 } from '../../common/schemas/notification.schemas';
 
-const enabledQuietHoursSchema = z.object({
-  enabled: z.literal(true),
-  startTimeLocal: localTimeSchema,
-  endTimeLocal: localTimeSchema,
-  timezone: timezoneSchema,
-});
+const enabledQuietHoursSchema = z
+  .object({
+    enabled: z.literal(true),
+    startTimeLocal: localTimeSchema,
+    endTimeLocal: localTimeSchema,
+    timezone: timezoneSchema,
+  })
+  .strict();
 
-const disabledQuietHoursSchema = z.object({
-  enabled: z.literal(false),
-  startTimeLocal: localTimeSchema.optional(),
-  endTimeLocal: localTimeSchema.optional(),
-  timezone: timezoneSchema.optional(),
-});
+const disabledQuietHoursSchema = z
+  .object({
+    enabled: z.literal(false),
+  })
+  .strict();
 
 export const updateUserPreferencesSchema = z
   .object({

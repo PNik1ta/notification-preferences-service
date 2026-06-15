@@ -1,4 +1,7 @@
-import type { Channel, NotificationType } from '@prisma/client';
+import type {
+  Channel,
+  NotificationType,
+} from '../../common/domain/notification.types';
 
 export type PreferenceSource = 'default' | 'user';
 
@@ -16,14 +19,6 @@ export interface QuietHoursResponse {
   timezone: string | null;
 }
 
-export interface QuietHoursUpdateInput {
-  userId: string;
-  enabled: boolean;
-  startTimeLocal?: string;
-  endTimeLocal?: string;
-  timezone?: string;
-}
-
 export interface UserPreferencesResponse {
   userId: string;
   preferences: EffectivePreference[];
@@ -35,6 +30,14 @@ export interface UserPreferenceUpdateInput {
   notificationType: NotificationType;
   channel: Channel;
   enabled: boolean;
+}
+
+export interface QuietHoursUpdateInput {
+  userId: string;
+  enabled: boolean;
+  startTimeLocal?: string;
+  endTimeLocal?: string;
+  timezone?: string;
 }
 
 export interface UpdateUserPreferencesInput {

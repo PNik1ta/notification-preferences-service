@@ -305,6 +305,24 @@ describe('Notification Preferences API (e2e)', () => {
     );
   });
 
+  it('rejects disabled quiet hours with schedule fields', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/users/${userId}/preferences`)
+      .send({
+        quietHours: {
+          enabled: false,
+          startTimeLocal: '22:00',
+        },
+      })
+      .expect(400);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        message: 'Validation failed',
+      }),
+    );
+  });
+
   async function cleanupUser(targetUserId: string): Promise<void> {
     await prisma.userPreference.deleteMany({
       where: {

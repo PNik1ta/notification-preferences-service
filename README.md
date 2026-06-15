@@ -8,6 +8,7 @@ The service supports:
 - user-specific preference overrides
 - quiet hours with timezone support
 - global policies by notification type, channel, and region
+- regional policies with fallback to `GLOBAL` policies
 - idempotent preference updates
 - allow/deny notification evaluation with clear decision reasons
 - basic structured logging for preference updates and evaluation decisions
@@ -179,7 +180,7 @@ Example:
 curl http://localhost:3000/users/user-1/preferences
 ```
 
-Response example:
+Response example, shortened:
 
 ```json
 {
@@ -201,6 +202,8 @@ Response example:
   "quietHours": null
 }
 ```
+
+The response contains all effective preferences resolved from default preferences plus user overrides. The examples in this README are shortened for readability.
 
 The `source` field shows whether the effective value came from default preferences or from a user override.
 
@@ -232,12 +235,18 @@ curl -X POST http://localhost:3000/users/user-1/preferences \
   }'
 ```
 
-Response example:
+Response example, shortened:
 
 ```json
 {
   "userId": "user-1",
   "preferences": [
+    {
+      "notificationType": "transactional",
+      "channel": "email",
+      "enabled": true,
+      "source": "default"
+    },
     {
       "notificationType": "marketing",
       "channel": "email",
@@ -254,7 +263,43 @@ Response example:
 }
 ```
 
+The update response returns the full effective preference state after applying the update.
+
 The update operation is idempotent. Repeating the same request produces the same final state and does not create duplicate preference records.
+
+Quiet hours can also be disabled without sending schedule fields:
+
+```bash
+curl -X POST http://localhost:3000/users/user-1/preferences \
+  -H "Content-Type: application/json" \
+  -d '{
+    "quietHours": {
+      "enabled": false
+    }
+  }'
+```
+
+Response example, shortened:
+
+```json
+{
+  "userId": "user-1",
+  "preferences": [
+    {
+      "notificationType": "transactional",
+      "channel": "email",
+      "enabled": true,
+      "source": "default"
+    }
+  ],
+  "quietHours": {
+    "enabled": false,
+    "startTimeLocal": null,
+    "endTimeLocal": null,
+    "timezone": null
+  }
+}
+```
 
 ### Evaluate notification
 
@@ -284,6 +329,15 @@ Response example:
   "reason": "blocked_by_global_policy"
 }
 ```
+
+The `datetime` value must be an ISO datetime with timezone information, for example:
+
+```txt
+2026-05-21T21:30:00Z
+2026-05-21T21:30:00+04:00
+```
+
+A datetime without timezone information, such as `2026-05-21T21:30:00`, is rejected.
 
 ## Domain model
 
@@ -323,6 +377,8 @@ Supported regions:
 - `GE`
 - `GLOBAL`
 
+`GLOBAL` is used as a fallback policy region. During evaluation, the service first checks for a region-specific policy. If no enabled region-specific policy exists, it checks for an enabled `GLOBAL` policy for the same notification type and channel.
+
 ## Seed data
 
 The seed creates default preferences:
@@ -338,17 +394,24 @@ The seed creates default preferences:
 | marketing | messenger | true |
 | marketing | push | true |
 
-The seed also creates one global policy:
+The seed also creates global policies:
 
 | Notification type | Channel | Region | Effect |
 | --- | --- | --- | --- |
 | marketing | sms | EU | deny |
+| marketing | messenger | GLOBAL | deny |
+
+The `EU` policy blocks only `marketing + sms` notifications in the `EU` region.
+
+The `GLOBAL` policy blocks `marketing + messenger` notifications in every region unless a more specific enabled policy is found first.
 
 ## Evaluation order
 
 The notification evaluation flow is:
 
-1. Check global policy
+1. Check enabled global policy:
+   - first by exact region
+   - then by `GLOBAL` fallback
 2. Resolve effective preference:
    - user preference override
    - default preference fallback
@@ -388,6 +451,10 @@ The service supports intervals that cross midnight, for example `22:00` to `08:0
 
 Transactional notifications are allowed during quiet hours. Non-transactional notifications, such as marketing notifications, are denied during quiet hours.
 
+When quiet hours are enabled, `startTimeLocal`, `endTimeLocal`, and `timezone` are required.
+
+When quiet hours are disabled, schedule fields are not required and are stored as `null`.
+
 ## Idempotency
 
 Preference updates are idempotent because the API sets the desired state instead of toggling it.
@@ -409,6 +476,8 @@ For example, sending this request multiple times:
 has the same result as sending it once.
 
 At the database level, this is implemented with unique constraints and Prisma `upsert` operations.
+
+Duplicate preference entries for the same `notificationType + channel` pair in a single update request are rejected to avoid ambiguous commands.
 
 ## Architecture
 
@@ -448,6 +517,7 @@ Responsible for:
 Responsible for:
 
 - reading enabled global policies
+- applying region-specific policy lookup with `GLOBAL` fallback
 - isolating policy persistence from evaluation logic
 
 ### Evaluation module
@@ -486,8 +556,11 @@ The service validates:
 - regions
 - local time format in `HH:mm`
 - IANA timezones
-- ISO datetimes
+- ISO datetimes with explicit timezone information
 - non-empty request bodies for update operations
+- non-empty `preferences` arrays
+- duplicate preference entries in one update request
+- required quiet-hours schedule fields when quiet hours are enabled
 
 ## Observability
 
@@ -526,11 +599,17 @@ Covered scenarios:
 
 - default preferences for a new user
 - user preference overrides
+- idempotent preference updates
 - quiet hours
 - quiet hours crossing midnight
+- disabling quiet hours without schedule fields
+- rejecting enabled quiet hours without required schedule fields
 - transactional notifications during quiet hours
-- global policy denial
-- idempotent preference updates
+- global policy denial by exact region
+- global policy denial by `GLOBAL` fallback
+- rejecting evaluate requests when datetime has no timezone
+- rejecting duplicate preferences in one update request
+- rejecting empty preferences update requests
 
 Run unit tests:
 
@@ -593,7 +672,19 @@ curl -X POST http://localhost:3000/users/user-1/preferences \
   }'
 ```
 
-Evaluate global policy denial:
+Disable quiet hours:
+
+```bash
+curl -X POST http://localhost:3000/users/user-1/preferences \
+  -H "Content-Type: application/json" \
+  -d '{
+    "quietHours": {
+      "enabled": false
+    }
+  }'
+```
+
+Evaluate global policy denial by exact region:
 
 ```bash
 curl -X POST http://localhost:3000/evaluate \
@@ -603,6 +694,20 @@ curl -X POST http://localhost:3000/evaluate \
     "notificationType": "marketing",
     "channel": "sms",
     "region": "EU",
+    "datetime": "2026-05-21T10:00:00Z"
+  }'
+```
+
+Evaluate global policy denial by `GLOBAL` fallback:
+
+```bash
+curl -X POST http://localhost:3000/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "user-1",
+    "notificationType": "marketing",
+    "channel": "messenger",
+    "region": "GE",
     "datetime": "2026-05-21T10:00:00Z"
   }'
 ```

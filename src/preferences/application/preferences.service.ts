@@ -91,9 +91,15 @@ export class PreferencesService {
         ? {
             userId,
             enabled: request.quietHours.enabled,
-            startTimeLocal: request.quietHours.startTimeLocal,
-            endTimeLocal: request.quietHours.endTimeLocal,
-            timezone: request.quietHours.timezone,
+            startTimeLocal: request.quietHours.enabled
+              ? request.quietHours.startTimeLocal
+              : undefined,
+            endTimeLocal: request.quietHours.enabled
+              ? request.quietHours.endTimeLocal
+              : undefined,
+            timezone: request.quietHours.enabled
+              ? request.quietHours.timezone
+              : undefined,
           }
         : undefined,
     };

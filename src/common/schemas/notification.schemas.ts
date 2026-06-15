@@ -1,11 +1,16 @@
 import { DateTime } from 'luxon';
 import { z } from 'zod';
+import {
+  CHANNELS,
+  NOTIFICATION_TYPES,
+  REGIONS,
+} from '../domain/notification.types';
 
-export const notificationTypeSchema = z.enum(['transactional', 'marketing']);
+export const notificationTypeSchema = z.enum(NOTIFICATION_TYPES);
 
-export const channelSchema = z.enum(['email', 'sms', 'messenger', 'push']);
+export const channelSchema = z.enum(CHANNELS);
 
-export const regionSchema = z.enum(['EU', 'US', 'GE', 'GLOBAL']);
+export const regionSchema = z.enum(REGIONS);
 
 export const localTimeSchema = z
   .string()

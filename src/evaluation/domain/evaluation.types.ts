@@ -1,4 +1,8 @@
-import type { Channel, NotificationType, Region } from '@prisma/client';
+import type {
+  Channel,
+  NotificationType,
+  Region,
+} from '../../common/domain/notification.types';
 
 export type NotificationDecision = 'allow' | 'deny';
 
@@ -21,4 +25,19 @@ export interface EvaluateNotificationInput {
 export interface EvaluateNotificationResponse {
   decision: NotificationDecision;
   reason: NotificationDecisionReason;
+}
+
+export interface PreferenceState {
+  enabled: boolean;
+}
+
+export interface GlobalPolicyState {
+  enabled: boolean;
+}
+
+export interface QuietHoursState {
+  enabled: boolean;
+  startTimeLocal: string;
+  endTimeLocal: string;
+  timezone: string;
 }

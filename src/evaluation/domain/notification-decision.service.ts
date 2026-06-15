@@ -1,25 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
 import type {
-  DefaultPreference,
-  GlobalPolicy,
-  NotificationType,
-  UserPreference,
-  UserQuietHours,
-} from '@prisma/client';
-import type {
   EvaluateNotificationInput,
   EvaluateNotificationResponse,
+  GlobalPolicyState,
+  PreferenceState,
+  QuietHoursState,
 } from './evaluation.types';
 
 @Injectable()
 export class NotificationDecisionService {
   decide(input: {
     request: EvaluateNotificationInput;
-    globalPolicy: GlobalPolicy | null;
-    userPreference: UserPreference | null;
-    defaultPreference: DefaultPreference | null;
-    quietHours: UserQuietHours | null;
+    globalPolicy: GlobalPolicyState | null;
+    userPreference: PreferenceState | null;
+    defaultPreference: PreferenceState | null;
+    quietHours: QuietHoursState | null;
   }): EvaluateNotificationResponse {
     const {
       request,
@@ -75,9 +71,9 @@ export class NotificationDecisionService {
   }
 
   private shouldBlockByQuietHours(input: {
-    notificationType: NotificationType;
+    notificationType: EvaluateNotificationInput['notificationType'];
     datetime: string;
-    quietHours: UserQuietHours | null;
+    quietHours: QuietHoursState | null;
   }): boolean {
     const { notificationType, datetime, quietHours } = input;
 

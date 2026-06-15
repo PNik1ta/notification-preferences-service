@@ -24,6 +24,12 @@ export const timezoneSchema = z
 
 export const isoDateTimeSchema = z
   .string()
-  .refine((value) => DateTime.fromISO(value, { setZone: true }).isValid, {
-    message: 'Invalid ISO datetime',
-  });
+  .refine(
+    (value) =>
+      DateTime.fromISO(value, { setZone: true }).isValid &&
+      /(?:Z|[+-]\d{2}:\d{2})$/.test(value),
+    {
+      message:
+        'Expected ISO datetime with timezone, for example 2026-05-21T21:30:00Z',
+    },
+  );

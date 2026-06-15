@@ -11,9 +11,17 @@ export interface EffectivePreference {
 
 export interface QuietHoursResponse {
   enabled: boolean;
-  startTimeLocal: string;
-  endTimeLocal: string;
-  timezone: string;
+  startTimeLocal: string | null;
+  endTimeLocal: string | null;
+  timezone: string | null;
+}
+
+export interface QuietHoursUpdateInput {
+  userId: string;
+  enabled: boolean;
+  startTimeLocal?: string;
+  endTimeLocal?: string;
+  timezone?: string;
 }
 
 export interface UserPreferencesResponse {
@@ -27,14 +35,6 @@ export interface UserPreferenceUpdateInput {
   notificationType: NotificationType;
   channel: Channel;
   enabled: boolean;
-}
-
-export interface QuietHoursUpdateInput {
-  userId: string;
-  enabled: boolean;
-  startTimeLocal: string;
-  endTimeLocal: string;
-  timezone: string;
 }
 
 export interface UpdateUserPreferencesInput {

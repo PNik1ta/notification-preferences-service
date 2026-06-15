@@ -97,16 +97,16 @@ export class PreferencesRepository {
           },
           update: {
             enabled: input.quietHours.enabled,
-            startTimeLocal: input.quietHours.startTimeLocal,
-            endTimeLocal: input.quietHours.endTimeLocal,
-            timezone: input.quietHours.timezone,
+            startTimeLocal: input.quietHours.startTimeLocal ?? null,
+            endTimeLocal: input.quietHours.endTimeLocal ?? null,
+            timezone: input.quietHours.timezone ?? null,
           },
           create: {
             userId: input.userId,
             enabled: input.quietHours.enabled,
-            startTimeLocal: input.quietHours.startTimeLocal,
-            endTimeLocal: input.quietHours.endTimeLocal,
-            timezone: input.quietHours.timezone,
+            startTimeLocal: input.quietHours.startTimeLocal ?? null,
+            endTimeLocal: input.quietHours.endTimeLocal ?? null,
+            timezone: input.quietHours.timezone ?? null,
           },
         });
       }

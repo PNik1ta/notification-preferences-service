@@ -78,6 +78,27 @@ async function seedDefaultPreferences(): Promise<void> {
       create: preference,
     });
   }
+
+  await prisma.globalPolicy.upsert({
+    where: {
+      notificationType_channel_region: {
+        notificationType: NotificationType.marketing,
+        channel: Channel.messenger,
+        region: Region.GLOBAL,
+      },
+    },
+    update: {
+      enabled: true,
+      reason: 'blocked_by_global_policy',
+    },
+    create: {
+      notificationType: NotificationType.marketing,
+      channel: Channel.messenger,
+      region: Region.GLOBAL,
+      enabled: true,
+      reason: 'blocked_by_global_policy',
+    },
+  });
 }
 
 async function seedGlobalPolicies(): Promise<void> {

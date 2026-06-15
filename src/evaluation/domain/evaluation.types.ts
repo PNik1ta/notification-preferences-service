@@ -37,7 +37,7 @@ export interface GlobalPolicyState {
 
 export interface QuietHoursState {
   enabled: boolean;
-  startTimeLocal: string;
-  endTimeLocal: string;
-  timezone: string;
+  startTimeLocal: string | null;
+  endTimeLocal: string | null;
+  timezone: string | null;
 }

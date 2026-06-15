@@ -156,6 +156,24 @@ describe('Notification Preferences API (e2e)', () => {
     });
   });
 
+  it('denies notification by global fallback policy', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/evaluate')
+      .send({
+        userId,
+        notificationType: 'marketing',
+        channel: 'messenger',
+        region: 'GE',
+        datetime: '2026-05-21T10:00:00Z',
+      })
+      .expect(200);
+
+    expect(response.body).toEqual({
+      decision: 'deny',
+      reason: 'blocked_by_global_policy',
+    });
+  });
+
   it('allows transactional push during quiet hours', async () => {
     const response = await request(app.getHttpServer())
       .post('/evaluate')
@@ -172,6 +190,119 @@ describe('Notification Preferences API (e2e)', () => {
       decision: 'allow',
       reason: 'allowed',
     });
+  });
+
+  it('rejects evaluate request when datetime has no timezone', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/evaluate')
+      .send({
+        userId,
+        notificationType: 'marketing',
+        channel: 'push',
+        region: 'GE',
+        datetime: '2026-05-21T21:30:00',
+      })
+      .expect(400);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        message: 'Validation failed',
+      }),
+    );
+  });
+
+  it('rejects duplicate preferences in one update request', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/users/${userId}/preferences`)
+      .send({
+        preferences: [
+          {
+            notificationType: 'marketing',
+            channel: 'email',
+            enabled: false,
+          },
+          {
+            notificationType: 'marketing',
+            channel: 'email',
+            enabled: true,
+          },
+        ],
+      })
+      .expect(400);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        message: 'Validation failed',
+      }),
+    );
+
+    expect(response.body.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: 'Duplicate preference for notificationType/channel',
+          path: ['preferences', 1],
+        }),
+      ]),
+    );
+  });
+
+  it('rejects empty preferences update request', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/users/${userId}/preferences`)
+      .send({
+        preferences: [],
+      })
+      .expect(400);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        message: 'Validation failed',
+      }),
+    );
+
+    expect(response.body.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: 'At least one preference must be provided',
+          path: ['preferences'],
+        }),
+      ]),
+    );
+  });
+
+  it('allows disabling quiet hours without schedule fields', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/users/${userId}/preferences`)
+      .send({
+        quietHours: {
+          enabled: false,
+        },
+      })
+      .expect(200);
+
+    expect(response.body.quietHours).toEqual({
+      enabled: false,
+      startTimeLocal: null,
+      endTimeLocal: null,
+      timezone: null,
+    });
+  });
+
+  it('rejects enabling quiet hours without schedule fields', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/users/${userId}/preferences`)
+      .send({
+        quietHours: {
+          enabled: true,
+        },
+      })
+      .expect(400);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        message: 'Validation failed',
+      }),
+    );
   });
 
   async function cleanupUser(targetUserId: string): Promise<void> {
@@ -263,6 +394,27 @@ describe('Notification Preferences API (e2e)', () => {
         notificationType: NotificationType.marketing,
         channel: Channel.sms,
         region: Region.EU,
+        enabled: true,
+        reason: 'blocked_by_global_policy',
+      },
+    });
+
+    await prisma.globalPolicy.upsert({
+      where: {
+        notificationType_channel_region: {
+          notificationType: NotificationType.marketing,
+          channel: Channel.messenger,
+          region: Region.GLOBAL,
+        },
+      },
+      update: {
+        enabled: true,
+        reason: 'blocked_by_global_policy',
+      },
+      create: {
+        notificationType: NotificationType.marketing,
+        channel: Channel.messenger,
+        region: Region.GLOBAL,
         enabled: true,
         reason: 'blocked_by_global_policy',
       },

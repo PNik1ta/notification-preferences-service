@@ -81,6 +81,14 @@ export class NotificationDecisionService {
       return false;
     }
 
+    if (
+      quietHours.startTimeLocal === null ||
+      quietHours.endTimeLocal === null ||
+      quietHours.timezone === null
+    ) {
+      return false;
+    }
+
     if (notificationType === 'transactional') {
       return false;
     }

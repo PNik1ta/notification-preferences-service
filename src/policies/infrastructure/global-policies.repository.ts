@@ -11,18 +11,30 @@ import { PrismaService } from '../../database/prisma.service';
 export class GlobalPoliciesRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findEnabledPolicy(
+  async findBlockingPolicy(
     notificationType: NotificationType,
     channel: Channel,
     region: Region,
   ): Promise<GlobalPolicy | null> {
-    return this.prisma.globalPolicy.findUnique({
+    const regionPolicy = await this.prisma.globalPolicy.findFirst({
       where: {
-        notificationType_channel_region: {
-          notificationType,
-          channel,
-          region,
-        },
+        notificationType,
+        channel,
+        region,
+        enabled: true,
+      },
+    });
+
+    if (regionPolicy) {
+      return regionPolicy;
+    }
+
+    return this.prisma.globalPolicy.findFirst({
+      where: {
+        notificationType,
+        channel,
+        region: 'GLOBAL',
+        enabled: true,
       },
     });
   }

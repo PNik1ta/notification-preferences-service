@@ -105,9 +105,9 @@ export class PreferencesService {
 
   private mapQuietHoursResponse(quietHours: {
     enabled: boolean;
-    startTimeLocal: string;
-    endTimeLocal: string;
-    timezone: string;
+    startTimeLocal: string | null;
+    endTimeLocal: string | null;
+    timezone: string | null;
   }): QuietHoursResponse {
     return {
       enabled: quietHours.enabled,

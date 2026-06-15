@@ -25,7 +25,7 @@ export class EvaluationService {
 
     const [globalPolicy, userPreference, defaultPreference, quietHours] =
       await Promise.all([
-        this.globalPoliciesRepository.findEnabledPolicy(
+        this.globalPoliciesRepository.findBlockingPolicy(
           input.notificationType,
           input.channel,
           input.region,

@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe';
 import { EvaluationService } from '../application/evaluation.service';
 import type { EvaluateNotificationResponse } from '../domain/evaluation.types';
@@ -12,6 +12,7 @@ export class EvaluationController {
   constructor(private readonly evaluationService: EvaluationService) {}
 
   @Post()
+  @HttpCode(HttpStatus.OK)
   async evaluate(
     @Body(new ZodValidationPipe(evaluateNotificationSchema))
     body: EvaluateNotificationRequest,

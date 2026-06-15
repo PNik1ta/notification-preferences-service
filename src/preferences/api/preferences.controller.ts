@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe';
 import { PreferencesService } from '../application/preferences.service';
 import type { UserPreferencesResponse } from '../domain/preferences.types';
@@ -19,6 +27,7 @@ export class PreferencesController {
   }
 
   @Post()
+  @HttpCode(HttpStatus.OK)
   async updateUserPreferences(
     @Param('userId') userId: string,
     @Body(new ZodValidationPipe(updateUserPreferencesSchema))

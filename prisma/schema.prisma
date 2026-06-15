@@ -1,7 +1,5 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "cjs"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -70,5 +68,6 @@ model GlobalPolicy {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
+  @@unique([notificationType, channel, region])
   @@index([notificationType, channel, region])
 }

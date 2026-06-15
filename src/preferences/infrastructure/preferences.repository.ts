@@ -5,6 +5,7 @@ import type {
   UserQuietHours,
 } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
+import type { UpdateUserPreferencesInput } from '../domain/preferences.types';
 
 @Injectable()
 export class PreferencesRepository {
@@ -29,6 +30,54 @@ export class PreferencesRepository {
       where: {
         userId,
       },
+    });
+  }
+
+  async updateUserPreferences(
+    input: UpdateUserPreferencesInput,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (transaction) => {
+      for (const preference of input.preferences ?? []) {
+        await transaction.userPreference.upsert({
+          where: {
+            userId_notificationType_channel: {
+              userId: input.userId,
+              notificationType: preference.notificationType,
+              channel: preference.channel,
+            },
+          },
+          update: {
+            enabled: preference.enabled,
+          },
+          create: {
+            userId: input.userId,
+            notificationType: preference.notificationType,
+            channel: preference.channel,
+            enabled: preference.enabled,
+          },
+        });
+      }
+
+      if (input.quietHours) {
+        await transaction.userQuietHours.upsert({
+          where: {
+            userId: input.userId,
+          },
+          update: {
+            enabled: input.quietHours.enabled,
+            startTimeLocal: input.quietHours.startTimeLocal,
+            endTimeLocal: input.quietHours.endTimeLocal,
+            timezone: input.quietHours.timezone,
+          },
+          create: {
+            userId: input.userId,
+            enabled: input.quietHours.enabled,
+            startTimeLocal: input.quietHours.startTimeLocal,
+            endTimeLocal: input.quietHours.endTimeLocal,
+            timezone: input.quietHours.timezone,
+          },
+        });
+      }
     });
   }
 }

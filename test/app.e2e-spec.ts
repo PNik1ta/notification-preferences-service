@@ -1,11 +1,7 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import {
-  Channel,
-  NotificationType,
-  Region,
-} from '@prisma/client';
+import { Channel, NotificationType, Region } from '@prisma/client';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/database/prisma.service';
 

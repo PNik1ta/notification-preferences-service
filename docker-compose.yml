@@ -11,6 +11,26 @@ services:
       - "5432:5432"
     volumes:
       - notification_preferences_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d notification_preferences"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: notification-preferences-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://app:app@postgres:5432/notification_preferences?schema=public
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
-  notification_preferences_pg_data:
+  notification_preferences_pg_data: 

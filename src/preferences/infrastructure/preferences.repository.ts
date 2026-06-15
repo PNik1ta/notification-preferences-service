@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import type {
+  Channel,
   DefaultPreference,
+  NotificationType,
   UserPreference,
   UserQuietHours,
 } from '@prisma/client';
@@ -17,10 +19,40 @@ export class PreferencesRepository {
     });
   }
 
+  async findDefaultPreference(
+    notificationType: NotificationType,
+    channel: Channel,
+  ): Promise<DefaultPreference | null> {
+    return this.prisma.defaultPreference.findUnique({
+      where: {
+        notificationType_channel: {
+          notificationType,
+          channel,
+        },
+      },
+    });
+  }
+
   async findUserPreferences(userId: string): Promise<UserPreference[]> {
     return this.prisma.userPreference.findMany({
       where: {
         userId,
+      },
+    });
+  }
+
+  async findUserPreference(
+    userId: string,
+    notificationType: NotificationType,
+    channel: Channel,
+  ): Promise<UserPreference | null> {
+    return this.prisma.userPreference.findUnique({
+      where: {
+        userId_notificationType_channel: {
+          userId,
+          notificationType,
+          channel,
+        },
       },
     });
   }

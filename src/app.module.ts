@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
 import { PreferencesModule } from './preferences/preferences.module';
+import { EvaluationModule } from './evaluation/evaluation.module';
 
 @Module({
   imports: [
@@ -10,6 +11,7 @@ import { PreferencesModule } from './preferences/preferences.module';
     }),
     DatabaseModule,
     PreferencesModule,
+    EvaluationModule,
   ],
 })
 export class AppModule {}

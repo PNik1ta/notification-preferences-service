@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: notification-preferences-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: notification_preferences
+    ports:
+      - "5432:5432"
+    volumes:
+      - notification_preferences_pg_data:/var/lib/postgresql/data
+
+volumes:
+  notification_preferences_pg_data:
